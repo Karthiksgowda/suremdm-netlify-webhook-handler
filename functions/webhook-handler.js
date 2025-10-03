@@ -1,15 +1,9 @@
 // This is the main entry point for the webhook handler
-
 const { Buffer } = require('buffer');
 
 // functions/webhook-handler.js
 export default async (request) => {
   console.log('+webhook-handler.js');
-  //console.log(request);
-  // Handle only POST requests
-  // if (request.method !== 'POST') {
-  //   return new Response('Method not allowed', { status: 405 });
-  // }
 
   // Parse the JSON body
   let body;
@@ -86,8 +80,8 @@ export default async (request) => {
       port: 587,
       secure: false, // true for 465, false for other ports
       auth: {
-        user: process.env.GMAIL_USERNAME, // || "osparhartest@gmail.com",
-        pass: process.env.GMAIL_APP_PASSWORD // "hbtv adrd haew egwo"
+        user: process.env.GMAIL_USERNAME, 
+        pass: process.env.GMAIL_APP_PASSWORD 
       }
     });
 
@@ -101,8 +95,8 @@ export default async (request) => {
     `;
 
     await transporter.sendMail({
-      from: `"Device Alert" <osparhartest@gmail.com>`,
-      to: 'onkar@42gears.com',
+      from: "Device Alert"  + process.env.GMAIL_SENDER_ADDRESS,
+      to: process.env.SEND_TO_EMAIL_ADDERESS,
       subject: `Device Alert: ${deviceName}`,
       text: emailBody,
       html: `<pre>${emailBody}</pre>`
