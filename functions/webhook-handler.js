@@ -1,3 +1,5 @@
+// This is the main entry point for the webhook handler
+
 const { Buffer } = require('buffer');
 
 // functions/webhook-handler.js
