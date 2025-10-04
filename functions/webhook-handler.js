@@ -5,6 +5,11 @@ const { Buffer } = require('buffer');
 export default async (request) => {
   console.log('+webhook-handler.js');
 
+  // Log the caller's IP address and domain information
+  const ip = request.headers.get('x-nf-client-connection-ip');
+  const domain = request.headers.get('host');
+  console.log(`Request from IP: ${ip}, Domain: ${domain}`);
+
   // Parse the JSON body
   let body;
   try {
@@ -49,6 +54,10 @@ export default async (request) => {
 
     const deviceData = await response.json();
 
+    if (!deviceData || !deviceData.data || !deviceData.data.rows || deviceData.data.rows.length === 0) {
+      throw new Error('Device details not found in SureMDM API response');
+    }
+    
     console.log('Fetched device details:', deviceData);
 
     // Extract specific fields (adjust keys based on actual API response structure)
