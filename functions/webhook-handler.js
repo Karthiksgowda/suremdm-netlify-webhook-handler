@@ -24,14 +24,18 @@ export default async (request) => {
   if (!body.EventType || !body.DeviceId) {
     return new Response('Missing required fields (event or data)', { status: 400 });
   }
-
-  // Your custom logic here (e.g., save to a database, send email, etc.)
- // Extract device ID from payload (adjust key if different, e.g., body.data.imei)
+   
+  // Extract device ID from payload
   const deviceId = body.DeviceId;
   if (!deviceId) {
     return new Response('Missing deviceId in payload', { status: 400 });
   }
 
+  // Your custom logic here 
+  // (e.g., save to a database, send email, use SureMDM APIs to perform further actions on the device, etc.)
+  // In this example, we are not verifying the event type. However, if multiple events are configured to invoke this handler, 
+  // it would be prudent to execute code based on the EventType parameter.
+  
   var apiUrl;
 
   try {
@@ -65,7 +69,6 @@ export default async (request) => {
     const imei = deviceData.data.rows[0].IMEI;
     const macAddress = deviceData.data.rows[0].MacAddress;  // Fallback for 'mac'
 
-    // Your custom logic here (e.g., save to DB, send notification)
     // For now, include fetched data in response
     const responseData = {
       message: 'Webhook received and device details fetched successfully',
