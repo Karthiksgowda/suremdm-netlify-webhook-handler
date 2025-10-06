@@ -16,4 +16,4 @@
    - Add a Webhook Endpoint.
    - Select desired events (e.g., Device Enrollment, Device Deleted).
    - Save the webhook.
-7. Test by triggering an event in SureMDM’s main grid. Check Netlify logs (Functions > webhook-handler > Logs) and SureMDM Webhook logs.
+7. Test by triggering an event in SureMDM’s main grid. Check Netlify logs (Functions > webhook-handler > Logs) and SureMDM Webhook logs. If the webhook handler function is called, it will fetch the device details for which the vent was triggered, and an email will be sent to the recipient email address.
