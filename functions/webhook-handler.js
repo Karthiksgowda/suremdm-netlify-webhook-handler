@@ -57,7 +57,7 @@ export default async (request) => {
     }
 
     const deviceData = await response.json();
-
+    console.log('Received deviceData:', deviceData);
     if (!deviceData || !deviceData.data || !deviceData.data.rows || deviceData.data.rows.length === 0) {
       throw new Error('Device details not found in SureMDM API response');
     }
