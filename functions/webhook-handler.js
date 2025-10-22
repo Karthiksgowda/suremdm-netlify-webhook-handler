@@ -8,15 +8,37 @@ export default async (request) => {
   // Log the caller's IP address and domain information
   const ip = request.headers.get('x-nf-client-connection-ip');
   const domain = request.headers.get('host');
+  const contentType = request.headers.get('content-type');
+  const userAgent = request.headers.get('user-agent');
+  
   console.log(`Request from IP: ${ip}, Domain: ${domain}`);
+  console.log(`Content-Type: ${contentType}`);
+  console.log(`User-Agent: ${userAgent}`);
+  console.log(`Method: ${request.method}`);
 
   // Parse the JSON body
   let body;
   try {
-    body = await request.json();
+    // First, get the raw text to see what we're receiving
+    const rawBody = await request.text();
+    console.log('Raw request body:', rawBody);
+    console.log('Raw body length:', rawBody.length);
+    
+    // Check if body is empty
+    if (!rawBody || rawBody.trim() === '') {
+      console.log('Empty request body received - this might be a connection test');
+      return new Response('Webhook endpoint is working. Send JSON data with EventType and DeviceId.', { 
+        status: 200,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+    
+    // Try to parse JSON
+    body = JSON.parse(rawBody);
   } catch (error) {
     console.error('Invalid JSON:', error);
-    return new Response('Invalid JSON body', { status: 400 });
+    console.error('Error details:', error.message);
+    return new Response(`Invalid JSON body. Error: ${error.message}`, { status: 400 });
   }
 
   // Simple processing: Log the payload and check for a required field
