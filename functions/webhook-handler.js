@@ -65,6 +65,7 @@ export default async (request) => {
     const authHeader = "Basic " + Buffer.from(process.env.SUREMDM_API_USERNAME + ":" + process.env.SUREMDM_API_PASSWORD).toString("base64");
 
     apiUrl = process.env.SUREMDM_API_URL + "/v2/device/" + deviceId;
+    console.log('Fetching device details from:', apiUrl);
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
