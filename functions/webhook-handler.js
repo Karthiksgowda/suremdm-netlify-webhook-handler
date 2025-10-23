@@ -54,50 +54,68 @@ export default async (request) => {
   }
 
   // Your custom logic here 
-  // (e.g., save to a database, send email, use SureMDM APIs to perform further actions on the device, etc.)
-  // In this example, we are not verifying the event type. However, if multiple events are configured to invoke this handler, 
-  // it would be prudent to execute code based on the EventType parameter.
+  // Handle different event types appropriately
+  console.log('Processing event type:', body.EventType);
   
-  var apiUrl;
+  let deviceName = 'Unknown Device';
+  let imei = 'N/A';
+  let macAddress = 'N/A';
+  let deviceData = null;
+  let apiUrl = null;
 
-  try {
-    // Fetch device details from SureMDM API
-    const authHeader = "Basic " + Buffer.from(process.env.SUREMDM_API_USERNAME + ":" + process.env.SUREMDM_API_PASSWORD).toString("base64");
+  // Check if this is a delete event - don't try to fetch device details for deleted devices
+  const isDeleteEvent = body.EventType === 'Device Deletion';
+  
+  if (!isDeleteEvent) {
+    // For non-delete events, try to fetch device details
+    try {
+      const authHeader = "Basic " + Buffer.from(process.env.SUREMDM_API_USERNAME + ":" + process.env.SUREMDM_API_PASSWORD).toString("base64");
 
-    apiUrl = process.env.SUREMDM_API_URL + "/v2/device/" + deviceId;
-    console.log('Fetching device details from:', apiUrl);
-    const response = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        Authorization: authHeader,
-        ApiKey: process.env.SUREMDM_API_KEY,
-        'Content-Type': 'application/json'
+      apiUrl = process.env.SUREMDM_API_URL + "/v2/device/" + deviceId;
+      console.log('Fetching device details from:', apiUrl);
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          Authorization: authHeader,
+          ApiKey: process.env.SUREMDM_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.warn(`Could not fetch device details: ${response.status} ${response.statusText}`);
+        // Don't throw error, continue with default values
+      } else {
+        deviceData = await response.json();
+        console.log('Received deviceData:', deviceData);
+        
+        if (deviceData && deviceData.data && deviceData.data.rows && deviceData.data.rows.length > 0) {
+          // Extract specific fields (adjust keys based on actual API response structure)
+          deviceName = deviceData.data.rows[0].DeviceName || 'Unknown Device';
+          imei = deviceData.data.rows[0].IMEI || 'N/A';
+          macAddress = deviceData.data.rows[0].MacAddress || 'N/A';
+          console.log('Successfully fetched device details');
+        } else {
+          console.warn('Device details not found in API response');
+        }
       }
-    });
-
-    if (!response.ok) {
-      throw new Error(`SureMDM API error: ${response.status} ${response.statusText}`);
+    } catch (apiError) {
+      console.warn('Error fetching device details:', apiError.message);
+      // Continue with default values instead of failing
     }
+  } else {
+    console.log('Delete event detected - skipping device details fetch');
+    deviceName = `Device ${deviceId} (Deleted)`;
+  }
 
-    const deviceData = await response.json();
-    console.log('Received deviceData:', deviceData);
-    if (!deviceData || !deviceData.data || !deviceData.data.rows || deviceData.data.rows.length === 0) {
-      throw new Error('Device details not found in SureMDM API response');
-    }
-    
-    console.log('Fetched device details:', deviceData);
-
-    // Extract specific fields (adjust keys based on actual API response structure)
-    const deviceName = deviceData.data.rows[0].DeviceName;
-    const imei = deviceData.data.rows[0].IMEI;
-    const macAddress = deviceData.data.rows[0].MacAddress;  // Fallback for 'mac'
-
+  // Send email notification and prepare response
+  try {
     // For now, include fetched data in response
     const responseData = {
-      message: 'Webhook received and device details fetched successfully',
+      message: 'Webhook received and processed successfully',
       receivedEvent: body.EventType,
       deviceId: deviceId,
-      //deviceData: deviceData,
       apiUrl: apiUrl,
       deviceDetails: {
         name: deviceName,
@@ -145,8 +163,8 @@ export default async (request) => {
         'Content-Type': 'application/json'
       }
     });
-    } catch (error) {
-    console.error('Error fetching from SureMDM API:', error);
+  } catch (error) {
+    console.error('Error processing webhook:', error);
     return new Response(`Error: ${error.message}`, { status: 500 });
   }
 };
